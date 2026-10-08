@@ -1,0 +1,12 @@
+export const siteName = 'Sistema Web de Solicitudes Internas';
+export const departments = ['Producción', 'Mantenimiento', 'Calidad', 'Almacén', 'Ingeniería', 'Seguridad', 'Recursos Humanos'];
+export const requestTypes = ['Mantenimiento correctivo', 'Mantenimiento preventivo', 'Materiales', 'Calidad', 'Seguridad', 'Soporte técnico', 'Otro'];
+export const priorities = ['Baja', 'Media', 'Alta', 'Urgente'] as const;
+export const statuses = ['Pendiente', 'En revisión', 'En proceso', 'Atendida', 'Cerrada', 'Rechazada'] as const;
+export type Status = typeof statuses[number];
+export type Priority = typeof priorities[number];
+export type Request = { id: string; folio: string; departamento_solicitante: string; nombre_solicitante: string; area_atiende: string; tipo_solicitud: string; prioridad: Priority; fecha_requerida: string; descripcion: string; ubicacion: string; observaciones: string | null; estado: Status; created_at: string; updated_at: string };
+export type Comment = {id:string; solicitud_id:string; comentario:string; autor:string; created_at:string};
+export type History = {id:string; solicitud_id:string; estado_anterior:Status|null; estado_nuevo:Status; comentario:string|null; created_at:string};
+export const formatDate = (value: string) => new Intl.DateTimeFormat('es-MX', {dateStyle:'medium',timeStyle:'short'}).format(new Date(value));
+export const formatDay = (value:string) => new Intl.DateTimeFormat('es-MX', {dateStyle:'medium'}).format(new Date(value+'T12:00:00'));
