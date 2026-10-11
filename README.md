@@ -110,3 +110,14 @@ supabase/
 - **Notificaciones futuras:** agrega una integración de servidor o Edge Function, manteniendo sus claves secretas fuera del navegador.
 
 El tablero carga todos los registros en páginas de 500 para no omitir solicitudes por el límite habitual de la API. Para volúmenes grandes, conviene pasar filtros, métricas y paginación al servidor.
+
+
+## Cortes y descarga de Excel
+
+En Ver solicitudes, el selector Corte permite elegir **Diario** (selecciona un día), **Mensual** (selecciona un mes) o **Histórico** (todas las fechas, opción inicial). El corte usa la fecha de creación en `America/Mexico_City`, no la fecha requerida ni la última modificación. El resumen, la tabla y el archivo Excel respetan el corte y los filtros de folio, departamento, área, prioridad y estado.
+
+Pulsa **Descargar Excel** para obtener un archivo `.xlsx` con hojas **Solicitudes** y **Resumen**. Incluye todos los campos capturados, fechas, estado actual, filtros utilizados y totales. El botón se desactiva mientras se carga, si la consulta falla o si no hay coincidencias. La descarga se genera en el navegador; no requiere cambiar tablas ni configurar otro servicio. Los textos se exportan como texto, incluso si empiezan con `=`.
+
+Este corte es una consulta/exportación del estado actual de las solicitudes registradas en ese período. No cierra solicitudes ni conserva una fotografía de cómo estaban en una fecha anterior; el historial de cambios sigue disponible en el detalle.
+
+Verificación: `npm test` comprueba límites de día/mes según la zona horaria, filtros combinados y escritura/lectura de un Excel real. Para comprobar en el sitio: selecciona un día con registros, descarga el archivo, compara sus folios y total con el tablero; repite con un mes, Histórico y un filtro de área.
