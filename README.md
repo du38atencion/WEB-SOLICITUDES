@@ -1,6 +1,6 @@
 # Sistema Web de Solicitudes Internas
 
-Plataforma web responsive con Next.js, React, TypeScript y Supabase. Incluye registro con folio automático, tablero con filtros y resumen, detalles, comentarios, historial de estados y actualizaciones en tiempo real. Requiere iniciar sesión como ADMIN con Supabase Auth.
+Plataforma web responsive con Next.js, React, TypeScript y Supabase. Incluye registro con folio automático, tablero con filtros y resumen, detalles, comentarios, historial de estados y actualizaciones en tiempo real. No requiere login.
 
 ## 1. Instalar dependencias
 
@@ -37,11 +37,13 @@ En el **SQL Editor** de Supabase, ejecuta todo `supabase/schema.sql` **una vez**
 
 El folio usa el año actual de Ciudad de México y al menos cinco dígitos: `SOL-2026-00001`. No depende del reloj del navegador. El estado inicial siempre es Pendiente. Los comentarios y cambios de estado se guardan juntos; si otra persona cambió el estado mientras se editaba, se solicita actualizar en vez de sobrescribirlo.
 
-**Activar el acceso ADMIN (también en instalaciones nuevas):** Después de `schema.sql`, ejecuta una vez `supabase/migrations/20261011_admin_login.sql`. Esta migración conserva las solicitudes y bloquea lecturas, creación y seguimiento anónimos. No vuelvas a ejecutar `schema.sql` sobre la base existente.
+**Acceso sin login:** cualquier visitante con acceso al sitio y a su API pública puede leer solicitudes, crearlas y registrar seguimiento. El nombre del autor es declarado, no verificado. Antes de usar datos sensibles, añade autenticación y políticas por departamento o restringe el acceso al sitio. La clave pública no es un mecanismo de acceso privado.
 
-En Supabase → Authentication → Users → Add user → Create new user, crea `admin@solicitudes.internal` con la contraseña elegida por el propietario y activa Auto Confirm User. Este correo es un identificador interno: no envía correos ni permite recuperación por email. El formulario de acceso pide el usuario **ADMIN**. No guardes la contraseña en GitHub ni en variables públicas. En Authentication → Sign In / Providers, desactiva Allow new users to sign up (la ubicación puede variar en el dashboard). Solo la cuenta cuyo correo coincide con el identificador ADMIN tiene permisos, incluso si existe otra cuenta.
+## Retirar un login anterior
 
-Verifica el ingreso con datos correctos, rechazo con una contraseña incorrecta, cierre de sesión y que otra ventana sin sesión no pueda acceder. No compartas la sesión del navegador; cada persona debe entrar. Las acciones siguen usando un autor declarado; una cuenta compartida no identifica individualmente a cada operador. La contraseña compartida por chat debe cambiarse para un uso real.
+La versión actual abre directamente y no utiliza login. Si ejecutaste la migración `20261011_admin_login.sql`, ejecuta ahora `supabase/migrations/20261011_remove_login.sql` en SQL Editor. Restaura lectura, creación y seguimiento sin sesión y conserva los datos. También puede ejecutarse sobre el esquema original. No vuelvas a ejecutar `schema.sql` sobre una base existente. La migración ADMIN se conserva solo como referencia histórica; no la ejecutes para esta versión.
+
+No se requiere un token de administración Supabase para ejecutar la aplicación; los requisitos de acceso que se añadieron al borrador de Codex para crear ADMIN ya no son necesarios y pueden retirarse desde los ajustes del entorno.
 
 ## 4. Ejecutar localmente
 
@@ -61,7 +63,7 @@ No necesitas un servidor de base de datos local: el navegador se conecta a Supab
 
 ### Validación funcional con Supabase configurado
 
-1. Inicia sesión como ADMIN. Registra una solicitud con descripción, ubicación, solicitante, áreas, fecha, tipo y prioridad. Confirma el folio y el estado Pendiente.
+1. Registra una solicitud con descripción, ubicación, solicitante, áreas, fecha, tipo y prioridad. Confirma el folio y el estado Pendiente.
 2. Abre Ver solicitudes en otra ventana: debe aparecer sin recargar. Comprueba el resumen y cada filtro.
 3. Abre el detalle, cambia a En proceso y agrega un comentario con autor. Verifica los datos, el comentario con fecha y el historial del cambio.
 4. Comprueba que la segunda ventana recibe el cambio. Recarga ambas ventanas para verificar persistencia.
@@ -86,28 +88,25 @@ app/
   page.tsx            Entrada del sitio
   globals.css         Estilos responsive y variables de color
 components/
-  Platform.tsx        Sesión, inicio, navegación y marca
-  Login.tsx           Acceso ADMIN con Supabase Auth
+  Platform.tsx        Inicio, navegación y marca
   RequestForm.tsx     Registro y confirmación
   RequestBoard.tsx    Tabla, resumen, filtros y Realtime
   RequestDetail.tsx   Datos, comentarios y seguimiento
   Badge.tsx           Colores de estados y prioridades
 lib/
-  auth.ts             Identificador interno de la cuenta ADMIN
   config.ts           Nombre, departamentos, áreas, tipos y modelos
   supabase.ts         Cliente público y mensajes de error
 supabase/
   schema.sql          Tablas, permisos, folios e historial
-  migrations/         Migración de permisos para acceso ADMIN
 .env.example          Plantilla de configuración
 ```
 
 - **Nombre, departamentos, áreas y tipos:** edita `lib/config.ts`. Las listas son valores iniciales sugeridos; cambiar sus opciones no renombra registros históricos.
 - **Colores corporativos:** variables CSS al comienzo de `app/globals.css`.
-- **Logo:** reemplaza la marca SI en `components/Platform.tsx`; puedes guardar imágenes en una futura carpeta `public/`.
+- **Logo:** el encabezado usa `public/stellantis-logo.png`, una versión con fondo transparente preparada a partir de la imagen proporcionada. Reemplaza ese archivo para cambiar la marca; el tamaño responsive se configura en `.brand-logo` en `app/globals.css`.
 - **Estados y prioridades:** se definen en `lib/config.ts`, `Badge.tsx` y las restricciones SQL. Cambiarlos requiere una migración coordinada.
 - **Más campos:** agrega una migración SQL, actualiza los tipos y el formulario/detalle.
-- **Roles futuros:** el login usa Supabase Auth; amplía las políticas ADMIN y agrega cuentas individuales para permisos por usuario/departamento.
+- **Login y roles futuros:** incorpora Supabase Auth y reemplaza las políticas públicas por políticas por usuario/departamento.
 - **Notificaciones futuras:** agrega una integración de servidor o Edge Function, manteniendo sus claves secretas fuera del navegador.
 
 El tablero carga todos los registros en páginas de 500 para no omitir solicitudes por el límite habitual de la API. Para volúmenes grandes, conviene pasar filtros, métricas y paginación al servidor.
