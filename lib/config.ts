@@ -1,6 +1,7 @@
 export const siteName = 'Sistema Web de Solicitudes Internas';
-export const departments = ['Producción', 'Mantenimiento', 'Calidad', 'Almacén', 'Ingeniería', 'Seguridad', 'Recursos Humanos'];
-export const requestTypes = ['Mantenimiento correctivo', 'Mantenimiento preventivo', 'Materiales', 'Calidad', 'Seguridad', 'Soporte técnico', 'Otro'];
+export const departments = ['Ingenieria', 'Almacen', 'Maresa', 'Omnisure'];
+export const serviceAreas = ['records', 'Linker'];
+export const requestTypes = ['NCT', 'Material productivo', 'Equipo vacio', 'Totes', 'Otro'];
 export const priorities = ['Baja', 'Media', 'Alta', 'Urgente'] as const;
 export const statuses = ['Pendiente', 'En revisión', 'En proceso', 'Atendida', 'Cerrada', 'Rechazada'] as const;
 export type Status = typeof statuses[number];

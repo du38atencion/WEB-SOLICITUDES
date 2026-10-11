@@ -88,14 +88,14 @@ components/
   RequestDetail.tsx   Datos, comentarios y seguimiento
   Badge.tsx           Colores de estados y prioridades
 lib/
-  config.ts           Nombre, departamentos, tipos y modelos
+  config.ts           Nombre, departamentos, áreas, tipos y modelos
   supabase.ts         Cliente público y mensajes de error
 supabase/
   schema.sql          Tablas, permisos, folios e historial
 .env.example          Plantilla de configuración
 ```
 
-- **Nombre, departamentos y tipos:** edita `lib/config.ts`. Las listas son valores iniciales sugeridos; cambiar sus opciones no renombra registros históricos.
+- **Nombre, departamentos, áreas y tipos:** edita `lib/config.ts`. Las listas son valores iniciales sugeridos; cambiar sus opciones no renombra registros históricos.
 - **Colores corporativos:** variables CSS al comienzo de `app/globals.css`.
 - **Logo:** reemplaza la marca SI en `components/Platform.tsx`; puedes guardar imágenes en una futura carpeta `public/`.
 - **Estados y prioridades:** se definen en `lib/config.ts`, `Badge.tsx` y las restricciones SQL. Cambiarlos requiere una migración coordinada.
