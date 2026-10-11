@@ -1,6 +1,6 @@
 # Sistema Web de Solicitudes Internas
 
-Plataforma web responsive con Next.js, React, TypeScript y Supabase. Incluye registro con folio automático, tablero con filtros y resumen, detalles, comentarios, historial de estados y actualizaciones en tiempo real. No requiere login.
+Plataforma web responsive con Next.js, React, TypeScript y Supabase. Incluye registro con folio automático, tablero con filtros y resumen, detalles, comentarios, historial de estados y actualizaciones en tiempo real. Requiere iniciar sesión como ADMIN mediante Supabase Auth.
 
 ## 1. Instalar dependencias
 
@@ -37,13 +37,25 @@ En el **SQL Editor** de Supabase, ejecuta todo `supabase/schema.sql` **una vez**
 
 El folio usa el año actual de Ciudad de México y al menos cinco dígitos: `SOL-2026-00001`. No depende del reloj del navegador. El estado inicial siempre es Pendiente. Los comentarios y cambios de estado se guardan juntos; si otra persona cambió el estado mientras se editaba, se solicita actualizar en vez de sobrescribirlo.
 
-**Acceso sin login:** cualquier visitante con acceso al sitio y a su API pública puede leer solicitudes, crearlas y registrar seguimiento. El nombre del autor es declarado, no verificado. Antes de usar datos sensibles, añade autenticación y políticas por departamento o restringe el acceso al sitio. La clave pública no es un mecanismo de acceso privado.
+## Activar el login ADMIN
 
-## Retirar un login anterior
+La interfaz pide usuario **ADMIN** y la contraseña de la cuenta en Supabase. El identificador interno es `admin@solicitudes.internal`. La contraseña se configura en Supabase Auth; no se guarda ni se valida dentro del código del navegador.
 
-La versión actual abre directamente y no utiliza login. Si ejecutaste la migración `20261011_admin_login.sql`, ejecuta ahora `supabase/migrations/20261011_remove_login.sql` en SQL Editor. Restaura lectura, creación y seguimiento sin sesión y conserva los datos. También puede ejecutarse sobre el esquema original. No vuelvas a ejecutar `schema.sql` sobre una base existente. La migración ADMIN se conserva solo como referencia histórica; no la ejecutes para esta versión.
+1. Abre el MISMO proyecto Supabase cuya URL está en Vercel.
+2. Ve a **Authentication → Users → Add user → Create new user**.
+3. Escribe `admin@solicitudes.internal`, configura la contraseña elegida por el propietario y activa **Auto Confirm User**. Crea la cuenta. No uses la contraseña de la base de datos: son contraseñas distintas.
+4. Si la cuenta ya existe, no la dupliques. Usa la contraseña configurada para esa cuenta. Este correo es solo un identificador interno; no tiene buzón para recuperación por email.
+5. En **Authentication → Sign In / Providers**, verifica que **Email** esté habilitado. Desactiva **Allow new users to sign up** para evitar registros abiertos. Esto no impide crear cuentas manualmente desde el dashboard.
+6. En **SQL Editor → New query**, pega TODO `supabase/migrations/20261011_enable_admin.sql` y pulsa **Run**. Esta migración conserva las solicitudes, bloquea acceso anónimo y permite solo ADMIN. Funciona con la base original, tras retirar el login, o si ya habías activado ADMIN; también admite volver a ejecutarla.
+7. Espera el despliegue de Vercel y entra con ADMIN y la contraseña configurada. Comprueba que puedes consultar, crear, descargar cortes y registrar seguimiento. Pulsa **Cerrar sesión** y confirma que vuelve el formulario de acceso; una ventana privada debe pedir login.
 
-No se requiere un token de administración Supabase para ejecutar la aplicación; los requisitos de acceso que se añadieron al borrador de Codex para crear ADMIN ya no son necesarios y pueden retirarse desde los ajustes del entorno.
+No vuelvas a ejecutar `schema.sql` sobre una base existente. Para una instalación nueva: ejecuta primero `schema.sql` y luego `20261011_enable_admin.sql`. Las migraciones antiguas se conservan como historial; no ejecutes `20261011_remove_login.sql` si deseas mantener el acceso privado.
+
+No hacen falta variables adicionales en Vercel, claves `service_role` ni un token de administración Supabase para usar el login. Los requisitos de token añadidos al borrador de Codex solo eran para administrar la cuenta desde el chat; puedes retirarlos si no vas a usarlos.
+
+Si aparece **usuario o contraseña incorrectos**, comprueba que creaste la cuenta en el proyecto correcto, que el correo coincide y que usas su contraseña. Si aparece **cuenta no confirmada**, comprueba la confirmación del usuario. Si permite entrar pero no consultar solicitudes, verifica que ejecutaste la migración nueva en el mismo proyecto.
+
+Con una cuenta ADMIN compartida, todos los usuarios tienen los mismos permisos y los autores de comentarios siguen siendo declarados. Para uso real, cambia la contraseña compartida por chat y considera cuentas individuales.
 
 ## 4. Ejecutar localmente
 
@@ -63,7 +75,7 @@ No necesitas un servidor de base de datos local: el navegador se conecta a Supab
 
 ### Validación funcional con Supabase configurado
 
-1. Registra una solicitud con descripción, ubicación, solicitante, áreas, fecha, tipo y prioridad. Confirma el folio y el estado Pendiente.
+1. Inicia sesión como ADMIN. Registra una solicitud con descripción, ubicación, solicitante, áreas, fecha, tipo y prioridad. Confirma el folio y el estado Pendiente.
 2. Abre Ver solicitudes en otra ventana: debe aparecer sin recargar. Comprueba el resumen y cada filtro.
 3. Abre el detalle, cambia a En proceso y agrega un comentario con autor. Verifica los datos, el comentario con fecha y el historial del cambio.
 4. Comprueba que la segunda ventana recibe el cambio. Recarga ambas ventanas para verificar persistencia.
@@ -88,12 +100,14 @@ app/
   page.tsx            Entrada del sitio
   globals.css         Estilos responsive y variables de color
 components/
-  Platform.tsx        Inicio, navegación y marca
+  Platform.tsx        Sesión, inicio, navegación y marca
+  Login.tsx           Acceso ADMIN con Supabase Auth
   RequestForm.tsx     Registro y confirmación
   RequestBoard.tsx    Tabla, resumen, filtros y Realtime
   RequestDetail.tsx   Datos, comentarios y seguimiento
   Badge.tsx           Colores de estados y prioridades
 lib/
+  auth.ts             Identificador interno ADMIN
   config.ts           Nombre, departamentos, áreas, tipos y modelos
   supabase.ts         Cliente público y mensajes de error
 supabase/
@@ -106,7 +120,7 @@ supabase/
 - **Logo:** el encabezado usa `public/stellantis-logo.png`, una versión con fondo transparente preparada a partir de la imagen proporcionada. Reemplaza ese archivo para cambiar la marca; el tamaño responsive se configura en `.brand-logo` en `app/globals.css`.
 - **Estados y prioridades:** se definen en `lib/config.ts`, `Badge.tsx` y las restricciones SQL. Cambiarlos requiere una migración coordinada.
 - **Más campos:** agrega una migración SQL, actualiza los tipos y el formulario/detalle.
-- **Login y roles futuros:** incorpora Supabase Auth y reemplaza las políticas públicas por políticas por usuario/departamento.
+- **Roles futuros:** amplía el acceso actual de Supabase Auth con cuentas individuales y políticas por usuario/departamento.
 - **Notificaciones futuras:** agrega una integración de servidor o Edge Function, manteniendo sus claves secretas fuera del navegador.
 
 El tablero carga todos los registros en páginas de 500 para no omitir solicitudes por el límite habitual de la API. Para volúmenes grandes, conviene pasar filtros, métricas y paginación al servidor.
